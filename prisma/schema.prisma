@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+  relationMode = "prisma"
+}
+
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique    // Unique for authentication
+  password     String
+  name         String
+  email        String
+  phoneNumber  String
+  pictureUrl   String
+  bookings     Booking[]
+  reviews      Review[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Host {
+  id            String     @id @default(uuid())
+  username      String     @unique    // Unique for authentication
+  password      String
+  name          String
+  email         String
+  phoneNumber   String
+  pictureUrl    String
+  aboutMe       String
+  properties    Property[] // This represents the listings
+  totalListings Int        @default(0)
+  averageRating Float      @default(0)
+  totalReviews  Int        @default(0)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Property {
+  id             String          @id @default(uuid())
+  hostId         String
+  host           Host            @relation(fields: [hostId], references: [id])
+  title          String
+  description    String
+  location       String
+  pricePerNight  Float           // Price with 2 decimal places in SQLite
+  bedroomCount   Int
+  bathRoomCount  Int
+  maxGuestCount  Int
+  rating         Int
+  // Relationships
+  amenities      Amenity[]       // Many-to-many relationship
+  bookings       Booking[]       // One-to-many relationship
+  reviews        Review[]        // One-to-many relationship
+  images         PropertyImage[]
+  // Aggregated data
+  totalBookings  Int             @default(0)
+  averageRating  Float           @default(0)
+  reviewCount    Int             @default(0)
+  isAvailable    Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([hostId])
+}
+
+model PropertyImage {
+  id         String   @id @default(uuid())
+  url        String
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@index([propertyId])
+}
+
+model Amenity {
+  id         String     @id @default(uuid())
+  name       String
+  properties Property[] // Many-to-many relationship
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model Booking {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  propertyId     String
+  property       Property @relation(fields: [propertyId], references: [id])
+  checkinDate    DateTime
+  checkoutDate   DateTime
+  numberOfGuests Int
+  totalPrice     Float    // Represents price with 2 decimal places
+  bookingStatus  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+  @@index([propertyId])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id])
+  rating     Int
+  comment    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([propertyId])
+}
